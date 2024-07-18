@@ -8,30 +8,55 @@ import io
 
 class Model:
     def __init__(self):
-        #CHECK IF DATABASE DOESN'T EXIST
-        ##IF NO DATABASE: DOWNLOAD JSONS AND SET UP NEW DATABASE
-        db_location = os.path.join("model")
 
+        db_location = os.path.join("model")
         card_db_exist = os.path.exists(os.path.join(db_location, "cards.db"))
+
+        self.connection = sqlite3.connect("model/cards.db")
 
         if not card_db_exist:
             print("No card database.")
             self.populate_cards(self.download_json("https://mtgjson.com/api/v5/AtomicCards.json"))
             self.populate_prices(self.download_json("https://mtgjson.com/api/v5/AllPrices.json.xz"),
-                                 self.download_json("https://mtgjson.com/api/v5/AllPrintings.json.xz")
-                                 )
-        with open("model/AtomicCards.json", "r", encoding="utf-8") as file:
-            self.card_JSON = json.load(file)
-            self.card_data = self.card_JSON["data"]
-        self.keys = list(self.card_data.keys())
-    
+                                 self.download_json("https://mtgjson.com/api/v5/AllPrintings.json.xz"))
+
+    def __del__(self):
+        self.connection.close()
+
     def get_card_info(self, name):
-        card_info = self.card_data[name][0]
-        cmc = int(card_info["convertedManaCost"])
-        card_type = card_info["types"]
-        colours = card_info["colors"]
-        return [colours, cmc, card_type]
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            SELECT colors, convertedManaCost, types
+            FROM cards
+            WHERE name = ?
+        ''', (name,))
+
+        # Fetch the result of the query
+        result = cursor.fetchone()
+        if result:
+            colors, cmc, card_type = result
+            return [self.json_to_list(colors), cmc, self.json_to_list(card_type)]
+        else:
+            # Return a message or handle the case where no card is found
+            print(f"Card with name '{name}' not found.")
     
+    def get_card_price(self, name):
+        cursor = self.connection.cursor()
+        cursor.execute('''
+            SELECT price
+            FROM prices
+            WHERE name = ?
+        ''', (name,))
+        result = cursor.fetchone()
+
+        return result
+    
+    def list_to_json(self, items):
+        return json.dumps(items)
+
+    def json_to_list(self, items):
+        return json.loads(items)
+
     def download_json(self, url):
         #Gets json from file server
         print("Downloading: " + url)
@@ -51,8 +76,7 @@ class Model:
     def populate_cards(self, cards_json):
         print("Connecting to database")
         #Creates or connects to cards.db
-        connection = sqlite3.connect("model/cards.db")
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
 
         #Defines card info table 
         cursor.execute('''
@@ -87,10 +111,16 @@ class Model:
             card_info = card_value[0]
 
             #Changes some values into json formats where needed
-            foreign_data = json.dumps(card_info.get('foreignData', []))
-            identifiers = json.dumps(card_info.get('identifiers', {}))
-            legalities = json.dumps(card_info.get('legalities', {}))
-
+            foreign_data = self.list_to_json(card_info.get('foreignData', []))
+            identifiers = self.list_to_json(card_info.get('identifiers', {}))
+            legalities = self.list_to_json(card_info.get('legalities', {}))
+            colorIdentity = self.list_to_json(card_info.get('colorIdentity', []))
+            colors = self.list_to_json(card_info.get('colors', []))
+            printings = self.list_to_json(card_info.get('printings', []))
+            subtypes = self.list_to_json(card_info.get('subtypes', []))
+            supertypes = self.list_to_json(card_info.get('supertypes', []))
+            types = self.list_to_json(card_info.get('types', []))
+            
             #Inserts appropriate card info into table
             cursor.execute('''
                     INSERT OR REPLACE INTO cards (
@@ -100,8 +130,8 @@ class Model:
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     card_info.get('name'),
-                    ','.join(card_info.get('colorIdentity', [])),
-                    ','.join(card_info.get('colors', [])),
+                    colorIdentity,
+                    colors,
                     card_info.get('convertedManaCost'),
                     card_info.get('edhrecRank'),
                     card_info.get('edhrecSaltiness'),
@@ -112,18 +142,18 @@ class Model:
                     legalities,
                     card_info.get('manaCost'),
                     card_info.get('manaValue'),
-                    ','.join(card_info.get('printings', [])),
-                    ','.join(card_info.get('subtypes', [])),
-                    ','.join(card_info.get('supertypes', [])),
+                    printings,
+                    subtypes,
+                    supertypes,
                     card_info.get('text'),
                     card_info.get('type'),
-                    ','.join(card_info.get('types', []))
+                    types
                 ))
         
         print("Card table done")
-        #Commits to database and closes connection
-        connection.commit()
-        connection.close()
+
+        #Commits to database
+        self.connection.commit()
     
     def populate_prices(self, prices_json, printings_json):
         #Get every unique printing ID for each card
@@ -169,8 +199,7 @@ class Model:
 
         print("Populating price info")
         #connects to cards.db
-        conn = sqlite3.connect("model/cards.db")
-        cursor = conn.cursor()
+        cursor = self.connection.cursor()
 
         #Defines card prices table
         cursor.execute('''
@@ -189,6 +218,6 @@ class Model:
             ''', (name, price))
 
         print("Price table done")
-        #Commits to database and closes connection
-        conn.commit()
-        conn.close()
+
+        #Commits to database
+        self.connection.commit()
