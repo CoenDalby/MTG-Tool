@@ -1,3 +1,9 @@
+#JSON and DBs
+model/AllPricesToday.json
+model/AtomicCards.json
+model/cards.db
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

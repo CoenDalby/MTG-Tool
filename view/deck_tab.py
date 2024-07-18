@@ -34,6 +34,12 @@ class DeckTab():
                                    command = self.clear_field)
         self.clear_button.grid(row=3, column =1, padx = 5, pady = 5)
         self.tab_count = 0
+
+        #Refresh button
+        self.import_button = Button(self.tab, text = "Refresh Database",
+                               command = None)
+        self.import_button.grid(row=3, column =4, padx = 5, pady = 5)
+        self.tab_count = 0
         
         self.success_label = Label(self.tab, text = "Awaiting new list.")
         self.success_label.grid(row = 1, column = 4)
