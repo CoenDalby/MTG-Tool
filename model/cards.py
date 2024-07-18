@@ -2,6 +2,9 @@ import json
 import os
 import requests
 import sqlite3
+import lzma
+import io
+
 
 class Model:
     def __init__(self):
@@ -10,15 +13,13 @@ class Model:
         db_location = os.path.join("model")
 
         card_db_exist = os.path.exists(os.path.join(db_location, "cards.db"))
-        price_db_exist =  os.path.exists(os.path.join(db_location, "prices.db"))
 
         if not card_db_exist:
             print("No card database.")
-            self.populate_card_db(self.download_json("https://mtgjson.com/api/v5/AtomicCards.json"))
-
-        if not price_db_exist:
-            print("No price database.")
-            
+            self.populate_cards(self.download_json("https://mtgjson.com/api/v5/AtomicCards.json"))
+            self.populate_prices(self.download_json("https://mtgjson.com/api/v5/AllPrices.json.xz"),
+                                 self.download_json("https://mtgjson.com/api/v5/AllPrintings.json.xz")
+                                 )
         with open("model/AtomicCards.json", "r", encoding="utf-8") as file:
             self.card_JSON = json.load(file)
             self.card_data = self.card_JSON["data"]
@@ -33,13 +34,21 @@ class Model:
     
     def download_json(self, url):
         #Gets json from file server
-        print("Downloading JSON")
+        print("Downloading: " + url)
         response = requests.get(url)
-        print("Downloaded")
+        print("Downloaded.")
+
+        if url.endswith(".xz"):
+            print("Converting .xz to json.")
+            with lzma.open(io.BytesIO(response.content), 'rt', encoding='utf-8') as xz_file:
+                # Read the decompressed JSON data
+                json_data = json.load(xz_file)
+        else:
+            json_data = response.json()
+
+        return json_data
         
-        return response.json()
-    
-    def populate_card_db(self, cards_json):
+    def populate_cards(self, cards_json):
         print("Connecting to database")
         #Creates or connects to cards.db
         connection = sqlite3.connect("model/cards.db")
@@ -111,7 +120,75 @@ class Model:
                     ','.join(card_info.get('types', []))
                 ))
         
-        print("Card db done")
+        print("Card table done")
         #Commits to database and closes connection
         connection.commit()
         connection.close()
+    
+    def populate_prices(self, prices_json, printings_json):
+        #Get every unique printing ID for each card
+        #Partially adapted from 
+        #https://rentry.org/mtgjson-tut#looking-up-price-by-card-name
+        name_to_uuid = {}
+        for set_id in printings_json["data"].keys():
+            for card in printings_json["data"][set_id]["cards"]:
+                if card["name"] not in name_to_uuid:
+                    name_to_uuid[card["name"]] = []
+                name_to_uuid[card["name"]].append(card["uuid"])
+
+        def get_cheapest_printing(paper_prices):
+            cheapest_price = float("inf")  
+            for retailer in paper_prices:
+                if retailer in ["tcgplayer", "cardkingdom"]:
+                            for date in paper_prices[retailer]["retail"]["normal"]:
+                                price = paper_prices[retailer]["retail"]["normal"][date]
+                                if price < cheapest_price:
+                                    cheapest_price = price
+            
+            return cheapest_price if cheapest_price != float('inf') else None
+    
+        #Get cheapest printing for every unique card
+        name_to_cheapest = {name: None for name in name_to_uuid.keys()}
+        for name, uuid_list in name_to_uuid.items():
+            cheapest = None
+            for uuid in uuid_list:
+                try: cheapest = get_cheapest_printing(prices_json["data"][uuid]["paper"])
+                except: pass
+            name_to_cheapest[name] = cheapest
+
+
+
+        total_items = len(name_to_cheapest)
+        none_count = sum(1 for price in name_to_cheapest.values() if price is not None)
+        percentage_none = (none_count / total_items) * 100
+
+        print("Unique printings: " + str(len(prices_json["data"])))
+        print("Unique cards: " + str(total_items))
+        # Print the percentage
+        print(f"Percentage of cards with prices: {percentage_none:.2f}%")
+
+        print("Populating price info")
+        #connects to cards.db
+        conn = sqlite3.connect("model/cards.db")
+        cursor = conn.cursor()
+
+        #Defines card prices table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS prices (
+                name TEXT PRIMARY KEY,
+                price REAL
+            )
+        ''')
+
+
+        #Populates the table with all card prices
+        for name, price in name_to_cheapest.items():
+            cursor.execute('''
+                INSERT OR REPLACE INTO prices (name, price)
+                VALUES (?, ?)
+            ''', (name, price))
+
+        print("Price table done")
+        #Commits to database and closes connection
+        conn.commit()
+        conn.close()

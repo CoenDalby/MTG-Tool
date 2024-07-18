@@ -2,7 +2,7 @@
 model/AllPricesToday.json
 model/AtomicCards.json
 model/cards.db
-
+model/prices.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
