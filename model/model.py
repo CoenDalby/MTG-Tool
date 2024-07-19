@@ -73,8 +73,8 @@ class Model:
             WHERE name = ?
         ''', (name,))
         result = cursor.fetchone()
-
-        return result
+        if result == None: return None
+        else: return result[0]
     
     def get_dual_lands(self,db_name, include_texts, exclude_texts):
         cursor = self.connection.cursor()

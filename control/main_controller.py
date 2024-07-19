@@ -1,10 +1,8 @@
 from view.window import View
 from model.model import Model
-from control.stats import Controller as StatsControl
-from control.db import Controller as DBControl
-from control.cards import Controller as CardControl
+from control import *
 
-class Controller(StatsControl, DBControl, CardControl):
+class Controller(StatsControl, DBControl, CardControl, SuggestControl):
 
     def __init__(self):
         #Create the model/view classes to be used
@@ -13,7 +11,6 @@ class Controller(StatsControl, DBControl, CardControl):
         
         #Empty list that will contain dictionaries of card data/quantity
         self.decklist = []
-
         return
     
     def run(self):

@@ -64,10 +64,10 @@ class ManaTab():
         self.slider_value_label.config(text=f"{int(float(value))}%")
 
     def generate_lands(self):
-        if self.budget_var.get(): budget = self.budget_entry.get()
+        if self.budget_var.get(): budget = float(self.budget_entry.get())
         else: budget = float("inf")
 
-        if self.card_max_var.get(): max_card_price = self.max_entry.get()
+        if self.card_max_var.get(): max_card_price = float(self.max_entry.get())
         else: max_card_price = float("inf")
 
         if self.basic_land_choice.get() == 1: basic_choice = -1
@@ -76,5 +76,5 @@ class ManaTab():
         if self.land_count_choice.get() == 1: land_count = -1
         else: land_count = self.chosen_lands.get()
 
-        self.controller.generate_lands(budget, max_card_price, basic_choice)
+        self.controller.generate_lands(budget, max_card_price, basic_choice, land_count)
         return

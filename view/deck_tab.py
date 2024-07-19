@@ -85,7 +85,7 @@ class DeckTab():
         self.notebook.add(new_tab.tab, text = "Generate Landbase")
 
         #Update success label
-        self.success_label.config(text = "Deck imported!                  ")
+        self.success_label.config(text = "Deck imported!                    ")
         self.success_label.after(3000, lambda: self.success_label.config(text="Enter a list to import. \n"
                                                                               "Enter a title to save deck list."))
 
