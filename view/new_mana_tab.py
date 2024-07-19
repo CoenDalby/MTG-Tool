@@ -76,5 +76,5 @@ class ManaTab():
         if self.land_count_choice.get() == 1: land_count = -1
         else: land_count = self.chosen_lands.get()
 
-        self.controller.generate_lands(budget, max_card_price, basic_choice, land_count)
+        self.controller.generate_lands(budget, max_card_price, basic_choice)
         return

@@ -76,6 +76,37 @@ class Model:
 
         return result
     
+    def get_dual_lands(self,db_name, include_texts, exclude_texts):
+        cursor = self.connection.cursor()
+        
+        #Colours to include
+        include_conditions = " OR ".join([f"text LIKE '%{{{text}}}%'" for text in include_texts])
+        
+        #Colours to exclude
+        exclude_conditions = " AND ".join([f"text NOT LIKE '%{{{text}}}%'" for text in exclude_texts])
+        
+        #Makes sure only lands are returned
+        type_condition = "json_extract(types, '$') LIKE '%land%'"
+
+        #Defines the query
+        query = f"""
+            SELECT * FROM cards
+            WHERE ({include_conditions})
+            AND {exclude_conditions}
+            AND {type_condition}
+        """
+
+        #Executes query and generates results dict
+        cursor.execute(query)
+
+        column_names = [description[0] for description in cursor.description]
+        results = [dict(zip(column_names, row)) for row in cursor.fetchall()]
+        #Sorts results by edhrecRank
+        results = [card for card in results if card.get("edhrecRank") is not None]
+        results_sorted = sorted(results, key=lambda card: card.get("edhrecRank"))
+        
+        return results_sorted
+    
     def list_to_json(self, items):
         return json.dumps(items)
 
