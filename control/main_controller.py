@@ -34,6 +34,13 @@ class Controller:
             self.decklist.append(card_dict)
         return
     
+    def generate_lands(self, budget, max_card_price, basic_choice, land_count):
+        print(budget)
+        print(max_card_price)
+        print(basic_choice)
+        print(land_count)
+        return
+    
     def refresh_database(self):
         self.model.refresh_database()
         return self.get_db_stats()

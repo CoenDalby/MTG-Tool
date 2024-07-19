@@ -13,10 +13,8 @@ class View:
 
         #Sets up the main window
         self.window = tk.Tk()
-        self.window.eval('tk::PlaceWindow . center')
         self.window.title("MTG Deck Tool")
         self.window.resizable(False,False)
-
         #Creates the notebook to contain tabs
         self.notebook = ttk.Notebook(self.window)
         self.notebook.pack(pady=5,padx=5)
