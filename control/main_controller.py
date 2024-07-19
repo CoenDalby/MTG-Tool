@@ -9,29 +9,36 @@ class Controller:
         self.model = Model()
         self.view = View(self)
         
-        #Empty list that will contain cards
-        #[Name, Quantity, Cost, CMC, Types]
+        #Empty list that will contain dictionaries of card data/quantity
         self.decklist = []
+
         return
     
     def run(self):
         self.view.run()
         return
 
-    def set_decklist(self, decklist_string):
-        #Clears the old decklist
+    def set_decklist(self, decklist_string, title_entry):
+        #Clears the current deck info
         self.decklist = []
+        self.colour_identity = []
         #Splits up each line of the string into quantity/card name
         for card in decklist_string:
+            if card.startswith("###"):
+                continue
             card = card.split(" ", 1)
             name, quantity = card[1], card[0]
-            colours, cmc, card_type = self.model.get_card_info(name)
-            card_dict = {"name": name, 
-                         "quantity": float(quantity), 
-                         "colours":colours, 
-                         "cmc":cmc, 
-                         "type":card_type}
+            card_info = self.model.get_card_info(name)
+            card_dict = {"data": card_info, 
+                         "quantity": float(quantity)}
             self.decklist.append(card_dict)
+            for colour in card_info["colorIdentity"]:
+                if colour not in self.colour_identity: self.colour_identity.append(colour)
+
+        print(str(type(title_entry)))
+        print(title_entry)
+        print(self.colour_identity)
+        print(len(self.decklist))
         return
     
     def generate_lands(self, budget, max_card_price, basic_choice, land_count):
@@ -52,26 +59,31 @@ class Controller:
     def get_charts(self):
         deck_size = 0
         total_cmc = 0
+
         cmcs = {}
         colours = {}
         card_types = {}
+        
         for card in self.decklist:
-            deck_size += card["quantity"]
-            total_cmc += card["quantity"]*card["cmc"]
+            card_data = card.get("data")
+            card_quantity = card.get("quantity")
+
+            deck_size += card_quantity
+            total_cmc += card_quantity*card_data.get("convertedManaCost")
 
             #Counts each unique CMC in the deck
-            if card["cmc"] in cmcs: cmcs[card["cmc"]] += card["quantity"]
-            else: cmcs[card["cmc"]] = card["quantity"]
+            if card_data.get("convertedManaCost") in cmcs: cmcs[card_data.get("convertedManaCost")] += card_quantity
+            else: cmcs[card_data.get("convertedManaCost")] = card_quantity
 
             #Counts each unique colour in the deck
-            for colour in card["colours"]: 
-                if colour in colours: colours[colour] += card["quantity"]
-                else: colours[colour] = card["quantity"]
+            for colour in card_data.get("colorIdentity"): 
+                if colour in colours: colours[colour] += card_quantity
+                else: colours[colour] = card_quantity
             
             #Counts each unique type in the deck
-            for card_type in card["type"]:
-                if card_type in card_types: card_types[card_type] += card["quantity"]
-                else: card_types[card_type] = card["quantity"]
+            for card_type in card_data.get("types"):
+                if card_type in card_types: card_types[card_type] += card_quantity
+                else: card_types[card_type] = card_quantity
 
 
         pie_chart = self.colour_pie(colours)

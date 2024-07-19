@@ -25,20 +25,25 @@ class Model:
     def get_card_info(self, name):
         cursor = self.connection.cursor()
         cursor.execute('''
-            SELECT colors, convertedManaCost, types
+            SELECT *
             FROM cards
             WHERE name = ?
         ''', (name,))
 
-        # Fetch the result of the query
-        result = cursor.fetchone()
-        if result:
-            colors, cmc, card_type = result
-            return [self.json_to_list(colors), cmc, self.json_to_list(card_type)]
-        else:
-            # Return a message or handle the case where no card is found
-            print(f"Card with name '{name}' not found.")
+        fields = [
+            'foreignData','identifiers',
+            'legalities','colorIdentity',
+            'colors','printings',
+            'subtypes','supertypes','types'
+        ]
 
+        column_names = [description[0] for description in cursor.description]
+        results = dict(zip(column_names, cursor.fetchone()))
+
+        for field in fields:
+            results[field] = self.json_to_list(results[field])
+
+        return results
 
     def refresh_database(self):
         self.populate_cards(self.download_json("https://mtgjson.com/api/v5/AtomicCards.json"))
