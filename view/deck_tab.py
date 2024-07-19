@@ -45,11 +45,16 @@ class DeckTab():
         self.success_label.grid(row = 1, column = 4)
     
     def import_deck(self):
+        titles_to_keep = ["Import Deck", "Database"]
         #Deletes all other tabs as they are using old data
         tab_list = self.notebook.tabs()
         for tab_id in tab_list:
-            if tab_id != str(self.tab):
-                self.notebook.forget(tab_id)
+            # Get the title of the tab
+            tab_title = self.notebook.tab(tab_id, 'text')
+
+            # Check if the tab title is not in the list of titles to keep
+            if tab_title not in titles_to_keep:
+                self.notebook.forget(tab_id)  # Delete the tab
         
         #Sets the decklist to be used by the controller
         decklist = self.decklist_field.get("1.0", "end-1c")

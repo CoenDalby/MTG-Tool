@@ -3,8 +3,9 @@ from ttkbootstrap import *
 
 class TabTemplate():
     
-    def __init__(self, notebook):
+    def __init__(self, notebook, controller):
         self.notebook = notebook
+        self.controller = controller
         self.tab = Frame(notebook)
         self.tab.grid_propagate(False)
         self.tab.config(width=960, height=540)

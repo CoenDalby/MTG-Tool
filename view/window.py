@@ -5,6 +5,7 @@ import ttkbootstrap as ttk
 
 #View classes
 from view.deck_tab import DeckTab
+from view.database_tab import DBTab
 
 class View:
     def __init__(self, controller):
@@ -20,9 +21,16 @@ class View:
         self.notebook = ttk.Notebook(self.window)
         self.notebook.pack(pady=5,padx=5)
 
-        #Adds the first tab
+        #Adds starting tabs
+        self.db_tab = DBTab(self.notebook, self.controller)
+        self.notebook.add(self.db_tab.tab, text = "Database")
+
         self.main_tab = DeckTab(self.notebook, self.controller)
         self.notebook.add(self.main_tab.tab, text = "Import Deck")
+
+        #Opens window with deck tab selected
+        self.notebook.select(self.main_tab.tab)
+
         return
     
     def run(self):

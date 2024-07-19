@@ -4,7 +4,7 @@ import requests
 import sqlite3
 import lzma
 import io
-
+import datetime
 
 class Model:
     def __init__(self):
@@ -16,9 +16,8 @@ class Model:
 
         if not card_db_exist:
             print("No card database.")
-            self.populate_cards(self.download_json("https://mtgjson.com/api/v5/AtomicCards.json"))
-            self.populate_prices(self.download_json("https://mtgjson.com/api/v5/AllPrices.json.xz"),
-                                 self.download_json("https://mtgjson.com/api/v5/AllPrintings.json.xz"))
+            self.refresh_database()
+
 
     def __del__(self):
         self.connection.close()
@@ -39,6 +38,27 @@ class Model:
         else:
             # Return a message or handle the case where no card is found
             print(f"Card with name '{name}' not found.")
+
+
+    def refresh_database(self):
+        self.populate_cards(self.download_json("https://mtgjson.com/api/v5/AtomicCards.json"))
+        self.populate_prices(self.download_json("https://mtgjson.com/api/v5/AllPrices.json.xz"),
+                             self.download_json("https://mtgjson.com/api/v5/AllPrintings.json.xz"))
+        
+        total_cards, unique_printings, percent_valid, last_update = self.get_db_stats()
+        print("Total Cards: " + str(total_cards))
+        print("Unique Printings: " + str(unique_printings))
+        print("Percentage Valid: {:.2f}%".format(percent_valid))
+        print("Last Update: " + last_update)
+        return
+
+    def get_db_stats(self):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM stats")
+        row = cursor.fetchone()
+        if row:
+            total_cards, unique_printings, percent_valid, last_update = row
+        return total_cards, unique_printings, percent_valid, last_update
     
     def get_card_price(self, name):
         cursor = self.connection.cursor()
@@ -186,17 +206,6 @@ class Model:
                 except: pass
             name_to_cheapest[name] = cheapest
 
-
-
-        total_items = len(name_to_cheapest)
-        none_count = sum(1 for price in name_to_cheapest.values() if price is not None)
-        percentage_none = (none_count / total_items) * 100
-
-        print("Unique printings: " + str(len(prices_json["data"])))
-        print("Unique cards: " + str(total_items))
-        # Print the percentage
-        print(f"Percentage of cards with prices: {percentage_none:.2f}%")
-
         print("Populating price info")
         #connects to cards.db
         cursor = self.connection.cursor()
@@ -219,5 +228,31 @@ class Model:
 
         print("Price table done")
 
-        #Commits to database
+
+        #Calculate database stats
+        total_cards = len(name_to_cheapest)
+        valid_count = sum(1 for price in name_to_cheapest.values() if price is not None)
+        percentage_valid = (valid_count / total_cards) * 100
+        unique_printings = len(prices_json["data"])
+
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+
+
+        #Delete old stats table 
+        cursor.execute('DROP TABLE IF EXISTS stats')
+        #Create stats table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS stats (
+                total_cards INTEGER,
+                unique_printings INTEGER,
+                percent_valid REAL,
+                last_update DATE
+            )
+        ''')
+        #Inserts data 
+        cursor.execute('''
+            INSERT INTO stats (total_cards, unique_printings, percent_valid, last_update)
+            VALUES (?, ?, ?, ?)
+        ''', (total_cards, unique_printings, percentage_valid, current_date))
+
         self.connection.commit()
