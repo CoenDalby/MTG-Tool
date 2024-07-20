@@ -64,12 +64,12 @@ class DeckTab():
         #Deletes all other tabs as they are using old data
         tab_list = self.notebook.tabs()
         for tab_id in tab_list:
-            # Get the title of the tab
+            #Get the title of the tab
             tab_title = self.notebook.tab(tab_id, 'text')
 
-            # Check if the tab title is not in the list of titles to keep
+            #Check if the tab title is not in the list of titles to keep
             if tab_title not in titles_to_keep:
-                self.notebook.forget(tab_id)  # Delete the tab
+                self.notebook.forget(tab_id)
         
         #Sets the decklist to be used by the controller
         decklist = self.decklist_field.get("1.0", "end-1c")
@@ -88,7 +88,8 @@ class DeckTab():
         self.success_label.config(text = "Deck imported!                    ")
         self.success_label.after(3000, lambda: self.success_label.config(text="Enter a list to import. \n"
                                                                               "Enter a title to save deck list."))
-
-    
     def clear_field(self):
         self.decklist_field.delete('1.0', END)
+
+    def load_decklist(self):
+        return

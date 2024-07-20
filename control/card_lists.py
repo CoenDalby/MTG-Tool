@@ -23,3 +23,29 @@ class Controller:
                 if colour not in self.colour_identity: self.colour_identity.append(colour)
         return
 
+    def list_to_text_suggested(self, land_list):
+        
+        #Get decklist without lands
+        current = [card for card in self.decklist if "Land" not in card["data"].get("types")]
+        
+        #Get a list of all unique lands
+        unique_lands = []
+        for card in land_list:
+            if card not in unique_lands: unique_lands.append(card)
+        
+        new_lands = []
+        for land in unique_lands:
+            quantity = land_list.count(land)
+            new_lands.append({"data": land, "quantity": int(quantity)})
+        
+        
+
+        #Get new decklist
+        current += new_lands
+        self.decklist = current
+        decklist_string = ""
+        for card in current:
+            new_line = str(int(card["quantity"])) + " " + str(card["data"].get("name")) + "\n"
+            decklist_string += new_line
+
+        return decklist_string

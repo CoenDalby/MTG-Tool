@@ -6,3 +6,14 @@ class Controller:
     def get_db_stats(self):
         total_cards, unique_printings, percent_valid, last_update = self.model.get_db_stats()
         return total_cards, unique_printings, percent_valid, last_update
+    
+    def get_decklist_titles(self):
+        titles = self.model.get_decks()
+        return titles
+    
+    def save_decklist(self, decklist, title):
+        self.model.save_deck(decklist, title)
+
+    def load_decklist(self, title):
+        decklist = self.model.load_deck(title)
+        return decklist

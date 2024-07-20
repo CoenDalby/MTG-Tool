@@ -8,6 +8,7 @@ class Controller:
         #Overrides land count with user input if needed
         if lands > 0: total_lands = lands
         else: total_lands = self.card_types["Land"]
+
         deck_colours = len(self.colour_identity)
         print("Calculating non-basics")
         #Calculates amount of non-basic lands to suggest
@@ -53,21 +54,18 @@ class Controller:
                   "R":self.model.get_card_info("Mountain"),
                   "G":self.model.get_card_info("Forest")}
         
+        #Appends basic lands onto the end of the suggested list 
         for colour, count in basics_per_colour.items():
             while count > 0:
-                suggested_lands += [basics[colour]]
+                if len(suggested_lands) < total_lands: 
+                    suggested_lands += [basics[colour]]
                 count -= 1
-            
-        
-        for i in suggested_lands:
-            print(str(i.get("name")))
-        
-        print("Failed additions: "+ str(failed_additions))
-        print("Lands requested: " + str(lands))
-        print("Lands suggested: " + str(len(suggested_lands)))
 
-        return
-    
+        charts = self.get_charts()
+        card_list_str = self.list_to_text_suggested(suggested_lands)
+
+        return (failed_additions, total_lands, basics_per_colour, non_basics_per_colour, card_list_str, charts[0])
+
     def get_land_distribution(self, pip_total, lands):
         lands_per_colour = {}
         for colour, count in pip_total.items():

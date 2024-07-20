@@ -34,4 +34,3 @@ class View:
     def run(self):
         self.window.mainloop()
         return
-        

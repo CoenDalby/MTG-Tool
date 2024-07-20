@@ -36,6 +36,18 @@ class Controller:
         mana_curve = self.mana_curve_chart(self.cmcs)
         return [pie_chart, type_chart, mana_curve]
 
+    def calculate_mana_production(self):
+        pip_total = {"W":0,"U":0,"B":0,"R":0,"G":0}
+        for card in self.decklist:
+            data = card["data"]
+            for colour in pip_total.keys():
+                query = "{"+colour+"}"
+                if query in data.get("text"):
+                    pip_total[colour] += 1
+        pip_total = {key: value for key, value in pip_total.items() if value != 0}
+        print(str(pip_total))
+        return pip_total
+
     def colour_pie(self, colours):
         labels = list(colours.keys())
         sizes = list(colours.values())
@@ -64,3 +76,13 @@ class Controller:
         plt.ylabel('Quantity')
         plt.title("Mana Curve")
         return line
+    
+    def mana_production_pie(self):
+        pip_total = self.calculate_mana_production()
+        labels = list(pip_total.keys())
+        sizes = list(pip_total.values())
+        pie = plt.figure(figsize=(8,8))
+        plt.pie(sizes, labels = labels, autopct= "%1.1f%%", textprops={"fontsize":10})
+        plt.axis("equal")
+        plt.title("Land Production Distribution")
+        return pie

@@ -1,5 +1,5 @@
 from ttkbootstrap import *
-
+from view.mana_stats_tab import *
 
 class ManaTab():
     
@@ -76,5 +76,16 @@ class ManaTab():
         if self.land_count_choice.get() == 1: land_count = -1
         else: land_count = self.chosen_lands.get()
 
-        self.controller.generate_lands(budget, max_card_price, basic_choice, land_count)
+        land_info = self.controller.generate_lands(budget, max_card_price, basic_choice, land_count)
+        
+        tab_list = self.notebook.tabs()
+        for tab_id in tab_list:
+            tab_title = self.notebook.tab(tab_id, 'text')
+            if tab_title == "Landbase Results":
+                self.notebook.forget(tab_id)
+
+        #Creates the new stats tab that will display graphs
+        new_tab = ManaStatsTab(self.notebook, self.controller, land_info)
+        self.notebook.add(new_tab.tab, text = "Landbase Results")
+
         return
