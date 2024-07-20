@@ -46,7 +46,3 @@ class ManaStatsTab():
         pie2.draw()
         pie2.get_tk_widget().grid(row=1, column=4, padx= 5, pady = 5)
         pie2.get_tk_widget().config(width=480, height=270)
-    
-    def import_deck(self):
-        print("Ding Dong!")
-        return
