@@ -56,7 +56,8 @@ class DeckTab():
         self.dropdown_menu.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
         
         self.dropdown_menu["menu"].delete(0,"end")
-        self.deck_titles = self.controller.get_decklist_titles()
+        try: self.deck_titles = self.controller.get_decklist_titles()
+        except: self.deck_titles = ["No saved decks."]
         for entry in self.deck_titles:
             self.dropdown_menu["menu"].add_command(label=entry, command=lambda value=entry: self.dropdown_value.set(value))
 
