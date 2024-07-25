@@ -16,4 +16,8 @@ class Controller:
 
     def load_decklist(self, title):
         decklist = self.model.load_deck(title)
-        return decklist
+        
+        # Replace commas with newlines
+        cleaned_decklist = decklist.replace('"', "'").replace("['", "").replace("', '", " \n").replace("']", "")
+
+        return cleaned_decklist

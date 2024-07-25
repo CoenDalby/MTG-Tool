@@ -293,34 +293,27 @@ class Model:
 
         self.connection.commit()
 
-    def save_deck(self, string, title):
+    def save_deck(self, decklist, title):
         cursor = self.connection.cursor()
-
+        print(title)
+        print(decklist)
         #Defines card prices table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS decks (
-                title TEXT PRIMARY KEY,
-                decklist TEXT,
-            )
-        ''')
+        cursor.execute("CREATE TABLE IF NOT EXISTS decks (title TEXT PRIMARY KEY, decklist TEXT)")
         #Inserts data 
-        cursor.execute('''
-            INSERT INTO decks (title, decklist)
-            VALUES (?, ?)
-        ''', (title, string))
+        cursor.execute("INSERT OR REPLACE INTO decks (title, decklist) VALUES (?, ?)", (str(title), str(decklist)))
 
         self.connection.commit()
         return
     
     def get_decks(self):
         cursor = self.connection.cursor()
-        
         cursor.execute("SELECT title FROM decks")
-
         result = cursor.fetchall()
 
-        if result == None: return [""]
-        else: [row[0] for row in result]
+        if not result:
+            return [""]
+        else:
+            return [row[0] for row in result]
 
     def load_deck(self, title):
         cursor = self.connection.cursor()

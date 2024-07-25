@@ -54,9 +54,14 @@ class DeckTab():
         self.dropdown_value.set("Select saved deck list")
         self.dropdown_menu = OptionMenu(self.tab, self.dropdown_value, [])
         self.dropdown_menu.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
+        
+        self.dropdown_menu["menu"].delete(0,"end")
+        self.deck_titles = self.controller.get_decklist_titles()
+        for entry in self.deck_titles:
+            self.dropdown_menu["menu"].add_command(label=entry, command=lambda value=entry: self.dropdown_value.set(value))
 
-        # Load Deck button
-        self.load_button = Button(self.tab, text="Load Deck", command = None)
+        #Load Deck button
+        self.load_button = Button(self.tab, text="Load Deck", command = self.load_decklist)
         self.load_button.grid(row=5, column=2, padx=5, pady=5)
     
     def import_deck(self):
@@ -88,8 +93,28 @@ class DeckTab():
         self.success_label.config(text = "Deck imported!                    ")
         self.success_label.after(3000, lambda: self.success_label.config(text="Enter a list to import. \n"
                                                                               "Enter a title to save deck list."))
+        #If title has been entered, save decklist
+        if self.deck_title != "":
+            print(str(decklist))
+            print(str(self.deck_title.get()))
+            self.save_decklist(decklist, self.deck_title.get())
+
+
     def clear_field(self):
         self.decklist_field.delete('1.0', END)
 
+    def save_decklist(self, decklist, title):
+        self.controller.save_decklist(decklist, title)
+        self.deck_titles = self.controller.get_decklist_titles()
+        self.dropdown_menu["menu"].delete(0,"end")
+        try:
+            for entry in self.deck_titles:
+                self.dropdown_menu["menu"].add_command(label=entry, command=lambda value=entry: self.dropdown_value.set(value))
+        except:
+            print("No titles")
+        self.dropdown_value.set("Select saved deck list")
+
     def load_decklist(self):
-        return
+        deck_string = self.controller.load_decklist(self.dropdown_value.get())
+        self.decklist_field.delete('1.0', END)
+        self.decklist_field.insert('1.0', deck_string)

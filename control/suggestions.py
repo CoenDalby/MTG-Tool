@@ -4,11 +4,11 @@ class Controller:
         #These values will be infinite unless specified by user
         total = budget
         max_single = max_card_price
-
+        
         #Overrides land count with user input if needed
         if lands > 0: total_lands = lands
         else: total_lands = self.card_types["Land"]
-
+        
         deck_colours = len(self.colour_identity)
         print("Calculating non-basics")
         #Calculates amount of non-basic lands to suggest
@@ -21,6 +21,7 @@ class Controller:
             #3 or more will use 0.2*colours - 0.2 nb lands, 
             #meaning five colour decks use 80% nb lands
             nb_lands = round(((deck_colours*0.2)-0.2)*total_lands)
+
         print("Calculating pip totals")
         #Calculates total amount of coloured pips in all cards' mana costs
         pip_total = {"W":0,"U":0,"B":0,"R":0,"G":0}
@@ -60,6 +61,9 @@ class Controller:
                 if len(suggested_lands) < total_lands: 
                     suggested_lands += [basics[colour]]
                 count -= 1
+
+        if total_lands > len(suggested_lands):
+            suggested_lands += [self.model.get_card_info("Command Tower")]
 
         charts = self.get_charts()
         card_list_str = self.list_to_text_suggested(suggested_lands)
