@@ -11,7 +11,7 @@ class ManaStatsTab():
         self.tab.config(width=960, height=600)
         
         failed_additions, total_lands, basics_per_colour, non_basics_per_colour, card_list_str, colour_chart = info
-        basics = sum(basics_per_colour)
+        basics = sum(basics_per_colour.values())
         non_basics = int(total_lands - basics)
         info_string = (
             f"Requested Land total: {str(int(total_lands))}\n \n"
@@ -46,7 +46,3 @@ class ManaStatsTab():
         pie2.draw()
         pie2.get_tk_widget().grid(row=1, column=4, padx= 5, pady = 5)
         pie2.get_tk_widget().config(width=480, height=270)
-    
-    def import_deck(self):
-        print("Ding Dong!")
-        return
